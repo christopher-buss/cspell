@@ -3,9 +3,6 @@ name: '⚡ ESLint Plugin Benchmark'
 on:
   pull_request:
     types: [opened, synchronize]
-    paths:
-      - 'packages/cspell-eslint-plugin/**'
-      - '.github/workflows/eslint-plugin-benchmark.yml'
 
 permissions:
   contents: read
@@ -18,7 +15,6 @@ concurrency:
 jobs:
   benchmark:
     runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.changed_files, 'packages/cspell-eslint-plugin/')
     
     steps:
       - name: Checkout repository
