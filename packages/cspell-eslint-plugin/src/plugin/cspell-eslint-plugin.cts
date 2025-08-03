@@ -1,7 +1,7 @@
 // cspell:ignore TSESTree
 
 import type { ESLint, Rule } from 'eslint';
-import type { Program, Comment, Literal, TemplateElement, Identifier, ExportSpecifier, ImportSpecifier, Node } from 'estree';
+import type { Program, Comment, Literal, TemplateElement, Identifier, ExportSpecifier, ImportSpecifier, Node, MemberExpression } from 'estree';
 
 import { getDefaultLogger } from '../common/logger.cjs';
 import type { Options } from '../common/options.cjs';
@@ -1178,6 +1178,41 @@ function create(context: Rule.RuleContext): Rule.RuleListener {
         }
     }
 
+    /**
+     * Helper function to determine if the Identifier listener should be included.
+     * The Identifier listener is needed in the following cases:
+     * 1. When checkIdentifiers is true (to check identifier spelling)
+     * 2. When ignoreImports is true AND we're checking content that could be affected by imports
+     *    (strings, templates, JSX text) - this enables import tracking
+     */
+    function shouldIncludeIdentifierListener(): boolean {
+        if (options.checkIdentifiers) {
+            return true;
+        }
+        
+        // If we're not checking identifiers, we only need the listener for import tracking
+        // when ignoreImports is enabled and we're checking content that could reference imports
+        if (options.ignoreImports) {
+            return options.checkStrings || options.checkStringTemplates || options.checkJSXText;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Helper function to determine if the MemberExpression listener should be included.
+     * The MemberExpression listener is needed when ignoreImportProperties is enabled
+     * and we're checking content that could contain property access on imported identifiers.
+     */
+    function shouldIncludeMemberExpressionListener(): boolean {
+        if (!options.ignoreImportProperties) {
+            return false;
+        }
+        
+        // Only include if we're checking content that could contain property references
+        return options.checkIdentifiers || options.checkStrings || options.checkStringTemplates || options.checkJSXText;
+    }
+
     function buildRuleListeners(): ExtendedRuleListener {
         const listeners: ExtendedRuleListener = {};
 
@@ -1233,8 +1268,11 @@ function create(context: Rule.RuleContext): Rule.RuleListener {
                 listeners.TemplateElement = handleTemplateElement;
             }
 
-            if (options.checkIdentifiers || options.ignoreImports) {
-                // Include identifier handler if checking identifiers OR handling imports
+            if (shouldIncludeIdentifierListener()) {
+                // Include identifier handler based on precise conditional logic:
+                // - Always included when checkIdentifiers is true
+                // - Included for import tracking when ignoreImports is true and checking content that could reference imports
+                // - Excluded when both ignoreImports and checkIdentifiers are false
                 listeners.Identifier = (node: Identifier) => {
                     // Process the identifier
                     handleIdentifier(node);
@@ -1243,6 +1281,21 @@ function create(context: Rule.RuleContext): Rule.RuleListener {
                     // This is an alternative approach for incremental comment processing
                     // Currently disabled in favor of the bulk processing approach
                     // processNodeComments(node);
+                };
+            }
+
+            if (shouldIncludeMemberExpressionListener()) {
+                // Include MemberExpression handler for ignoreImportProperties support
+                // This tracks property access on imported identifiers to enhance import filtering
+                listeners.MemberExpression = (node: MemberExpression) => {
+                    // Track property access on imported identifiers
+                    if (node.object.type === 'Identifier' && importedIdentifiers.has(node.object.name)) {
+                        if (node.property.type === 'Identifier' && !node.computed) {
+                            // Add non-computed property names to the ignore set
+                            // This helps filter out property names that are accessed on imported objects
+                            toIgnore.add(node.property.name);
+                        }
+                    }
                 };
             }
 
