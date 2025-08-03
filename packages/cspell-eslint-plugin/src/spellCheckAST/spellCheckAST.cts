@@ -369,6 +369,16 @@ const needToAdjustSpace: Partial<Record<NodeType, true | undefined>> = {
 const isSpecial = /[^\p{L}_0-9]/u;
 const allSpecial = /[^\p{L}_0-9]/gu;
 
+function replaceSpecialChars(str: string): string {
+    const chars = Array.from(str);
+    for (let i = 0; i < chars.length; i++) {
+        if (allSpecial.test(chars[i])) {
+            chars[i] = '_';
+        }
+    }
+    return chars.join('');
+}
+
 function normalizeSuggestions(suggestions: Suggestions, nodeType: NodeType): Suggestions {
     if (!suggestions) return undefined;
 
@@ -377,9 +387,9 @@ function normalizeSuggestions(suggestions: Suggestions, nodeType: NodeType): Sug
     return suggestions.map((sug) => {
         if (!isSpecial.test(sug.word)) return sug;
         const s = { ...sug };
-        s.word = s.word.replaceAll(allSpecial, '_');
+        s.word = replaceSpecialChars(s.word);
         if (s.wordAdjustedToMatchCase) {
-            s.wordAdjustedToMatchCase = s.wordAdjustedToMatchCase.replaceAll(allSpecial, '_');
+            s.wordAdjustedToMatchCase = replaceSpecialChars(s.wordAdjustedToMatchCase);
         }
         return s;
     });

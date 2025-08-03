@@ -101,15 +101,16 @@ export async function spellCheck(
 
     errors.push(...(await checkSettings()));
 
-    const issues: SpellCheckIssue[] = ranges
-        .map((range, idx) => {
-            const issues = validator
-                .checkText(range, undefined, undefined)
-                .map((issue) => normalizeIssue(issue, range, idx));
-            return issues.length ? issues : undefined;
-        })
-        .filter((issues) => !!issues)
-        .flat();
+    const issues: SpellCheckIssue[] = [];
+    for (let idx = 0; idx < ranges.length; idx++) {
+        const range = ranges[idx];
+        const rangeIssues = validator
+            .checkText(range, undefined, undefined)
+            .map((issue) => normalizeIssue(issue, range, idx));
+        if (rangeIssues.length > 0) {
+            issues.push(...rangeIssues);
+        }
+    }
 
     return { issues, errors };
 
@@ -139,12 +140,20 @@ const cache: { lastDoc: CachedDoc | undefined } = { lastDoc: undefined };
 
 const docValCache = new WeakMap<TextDocument, DocumentValidator>();
 
+// TTL-based cache management
+const CACHE_TTL = 60 * 1000; // 60 seconds
+let lastRefresh = 0;
+
 function getDocValidator(filename: string, text: string, options: SpellCheckOptions): DocumentValidator {
     const doc = getTextDocument(filename, text);
     const settings = calcInitialSettings(options);
     const cachedValidator = docValCache.get(doc);
     if (cachedValidator && deepEqual(cachedValidator.settings, settings)) {
-        refreshDictionaryCache(0);
+        const now = Date.now();
+        if (now - lastRefresh > CACHE_TTL) {
+            refreshDictionaryCache(0);
+            lastRefresh = now;
+        }
         cachedValidator.updateDocumentText(text).catch(() => undefined);
         return cachedValidator;
     }
