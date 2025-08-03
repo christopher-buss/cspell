@@ -64,7 +64,8 @@
     "test-yaml": "npx mocha --timeout 10000 \"dist/**/yaml.test.mjs\"",
     "test-eslint": "npx mocha --timeout 10000 \"dist/**/*.test.mjs\"",
     "test-samples": "pnpm -r --filter @internal/eslint-plugin-fixtures-simple test",
-    "test": "pnpm run test-eslint && pnpm run test-samples"
+    "test": "pnpm run test-eslint && pnpm run test-samples",
+    "benchmark": "npx eslint-rule-benchmark run"
   },
   "repository": {
     "type": "git",
@@ -92,6 +93,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "eslint-plugin-yml": "^1.18.0",
+    "eslint-rule-benchmark": "0.8.0",
     "globals": "^16.3.0",
     "jsonc-eslint-parser": "^2.4.0",
     "mocha": "^11.7.1",
