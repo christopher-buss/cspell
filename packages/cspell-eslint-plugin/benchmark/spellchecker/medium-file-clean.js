@@ -110,15 +110,15 @@ class UserService extends EventEmitter {
      */
     async updatePreferences(userId, preferences) {
         // Validate preferences
-        const validatedPrefs = this.validatePreferences(preferences);
+        const validatedPreferences = this.validatePreferences(preferences);
 
         // Update in database
-        await this.updateUserData(userId, { preferences: validatedPrefs });
+        await this.updateUserData(userId, { preferences: validatedPreferences });
 
         // Clear cache
         this.clearUserCache(userId);
 
-        this.emit('preferencesUpdated', { userId, preferences: validatedPrefs });
+        this.emit('preferencesUpdated', { userId, preferences: validatedPreferences });
     }
 
     // Private helper methods
@@ -145,22 +145,22 @@ class UserService extends EventEmitter {
             .join('');
     }
 
-    sanitizePreferences(prefs = {}) {
+    sanitizePreferences(preferences = {}) {
         const defaults = {
             theme: 'light',
             language: 'en',
             notifications: true,
         };
-        return { ...defaults, ...prefs };
+        return { ...defaults, ...preferences };
     }
 
-    validatePreferences(prefs) {
+    validatePreferences(preferences) {
         const allowed = ['theme', 'language', 'notifications', 'timezone'];
         const validated = {};
 
         for (const key of allowed) {
-            if (key in prefs) {
-                validated[key] = prefs[key];
+            if (key in preferences) {
+                validated[key] = preferences[key];
             }
         }
 

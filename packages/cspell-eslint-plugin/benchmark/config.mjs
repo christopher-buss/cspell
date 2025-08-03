@@ -1,4 +1,11 @@
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { defineConfig } from 'eslint-rule-benchmark';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageRoot = dirname(__dirname);
 
 export default defineConfig({
     iterations: 50,
@@ -8,48 +15,44 @@ export default defineConfig({
 
     tests: [
         {
-            name: 'Rule: spellchecker',
+            name: 'cspell-spellchecker',
             ruleId: 'spellchecker',
-            rulePath: './dist/plugin/index.cjs',
+            rulePath: join(packageRoot, 'dist/plugin/cspell-eslint-plugin.cjs'),
 
             cases: [
                 {
-                    testPath: './benchmark/spellchecker/small-file.js',
+                    name: 'small-file',
+                    testPath: join(__dirname, 'spellchecker/small-file.js'),
+                },
+                {
+                    name: 'large-file',
+                    testPath: join(__dirname, 'spellchecker/large-file.js'),
+                    iterations: 20,
+                },
+                {
+                    name: 'complex-typescript',
+                    testPath: join(__dirname, 'spellchecker/complex-file.ts'),
                 },
 
-                // Typical use case
                 {
-                    testPath: './benchmark/spellchecker/medium-file.js',
+                    name: 'string-heavy',
+                    testPath: join(__dirname, 'spellchecker/string-heavy.js'),
                 },
-
-                // Stress test with large file
                 {
-                    testPath: './benchmark/spellchecker/large-file.js',
+                    name: 'string-heavy-errors',
+                    testPath: join(__dirname, 'spellchecker/string-heavy-errors.js'),
                 },
-
-                // TypeScript with complex AST
                 {
-                    testPath: './benchmark/spellchecker/complex-file.ts',
+                    name: 'comment-heavy',
+                    testPath: join(__dirname, 'spellchecker/comment-heavy.js'),
                 },
-
-                // Many string literals
                 {
-                    testPath: './benchmark/spellchecker/string-heavy.js',
+                    name: 'react-jsx',
+                    testPath: join(__dirname, 'spellchecker/react-component.jsx'),
                 },
-
-                // Many comments
                 {
-                    testPath: './benchmark/spellchecker/comment-heavy.js',
-                },
-
-                // React JSX component
-                {
-                    testPath: './benchmark/spellchecker/react-component.jsx',
-                },
-
-                // With autoFix enabled
-                {
-                    testPath: './benchmark/spellchecker/medium-file.js',
+                    name: 'with-autofix',
+                    testPath: join(__dirname, 'spellchecker/medium-file-clean.js'),
                     options: [
                         {
                             autoFix: true,
@@ -57,10 +60,9 @@ export default defineConfig({
                         },
                     ],
                 },
-
-                // With no suggestions (fastest mode)
                 {
-                    testPath: './benchmark/spellchecker/medium-file.js',
+                    name: 'no-suggestions',
+                    testPath: join(__dirname, 'spellchecker/medium-file-clean.js'),
                     options: [
                         {
                             autoFix: false,
@@ -68,10 +70,9 @@ export default defineConfig({
                         },
                     ],
                 },
-
-                // Only check comments
                 {
-                    testPath: './benchmark/spellchecker/comment-heavy.js',
+                    name: 'comments-only',
+                    testPath: join(__dirname, 'spellchecker/comment-heavy.js'),
                     options: [
                         {
                             checkComments: true,
@@ -82,10 +83,9 @@ export default defineConfig({
                         },
                     ],
                 },
-
-                // Only check strings
                 {
-                    testPath: './benchmark/spellchecker/string-heavy.js',
+                    name: 'strings-only',
+                    testPath: join(__dirname, 'spellchecker/string-heavy.js'),
                     options: [
                         {
                             checkComments: false,
@@ -95,6 +95,14 @@ export default defineConfig({
                             checkJSXText: false,
                         },
                     ],
+                },
+                {
+                    name: 'medium-file-clean',
+                    testPath: join(__dirname, 'spellchecker/medium-file-clean.js'),
+                },
+                {
+                    name: 'medium-file-errors',
+                    testPath: join(__dirname, 'spellchecker/medium-file-errors.js'),
                 },
             ],
         },
