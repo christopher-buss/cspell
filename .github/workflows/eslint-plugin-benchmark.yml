@@ -1,0 +1,39 @@
+name: '⚡ ESLint Plugin Benchmark'
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'packages/cspell-eslint-plugin/**'
+      - '.github/workflows/eslint-plugin-benchmark.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.changed_files, 'packages/cspell-eslint-plugin/')
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup and Build
+        uses: ./.github/actions/install-build-cache
+        with:
+          node-version: 22.x
+
+      - name: Run ESLint Plugin Benchmark
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd packages/cspell-eslint-plugin
+          pnpm run benchmark

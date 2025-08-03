@@ -65,7 +65,7 @@
     "test-eslint": "npx mocha --timeout 10000 \"dist/**/*.test.mjs\"",
     "test-samples": "pnpm -r --filter @internal/eslint-plugin-fixtures-simple test",
     "test": "pnpm run test-eslint && pnpm run test-samples",
-    "benchmark": "pnpm run build && npx eslint-rule-benchmark run"
+    "benchmark": "npx eslint-rule-benchmark run"
   },
   "repository": {
     "type": "git",
