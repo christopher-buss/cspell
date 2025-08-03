@@ -223,11 +223,22 @@ export function spellCheckAST(filename: string, text: string, root: Node, option
 
         const scopePath = new AstPathScope(path);
 
-        const scores = possibleScopes
-            .map(({ scope, check }) => ({ score: scopePath.score(scope), check, scope }))
-            .filter((s) => s.score > 0);
-        const maxScore = Math.max(0, ...scores.map((s) => s.score));
-        const topScopes = scores.filter((s) => s.score === maxScore);
+        let maxScore = 0;
+        const topScopes: Array<{ scope: AstScopeMatcher; check: boolean }> = [];
+
+        for (const { scope, check } of possibleScopes) {
+            const score = scopePath.score(scope);
+            if (score > 0) {
+                if (score > maxScore) {
+                    maxScore = score;
+                    topScopes.length = 0;
+                    topScopes.push({ scope, check });
+                } else if (score === maxScore) {
+                    topScopes.push({ scope, check });
+                }
+            }
+        }
+
         if (!topScopes.length) return undefined;
         return Object.fromEntries(topScopes.map((s) => [s.scope.scopeField(), s.check]));
     }
