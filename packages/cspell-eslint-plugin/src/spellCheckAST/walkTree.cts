@@ -7,26 +7,16 @@ import type { ASTPath, ASTPathElement, Key } from './ASTPath.js' with { 'resolut
 const debugMode = false;
 
 export function walkTree(node: ASTNode, enter: (path: ASTPath) => void): void {
-    const visited = new Set<object>();
-
-    let pathNode: ASTPath | undefined = undefined;
+    const visited = new WeakSet<object>();
+    const pathByNode = new WeakMap<ASTNode, ASTPath>();
 
     function adjustPath(n: ASTPath): ASTPath {
-        if (!n.parent || !pathNode) {
-            pathNode = n;
+        if (!n.parent) {
             n.prev = undefined;
-            return n;
+        } else {
+            n.prev = pathByNode.get(n.parent) || undefined;
         }
-        if (pathNode.node === n.parent) {
-            n.prev = pathNode;
-            pathNode = n;
-            return n;
-        }
-        while (pathNode && pathNode.node !== n.parent) {
-            pathNode = pathNode.prev;
-        }
-        n.prev = pathNode;
-        pathNode = n;
+        pathByNode.set(n.node, n);
         return n;
     }
 
